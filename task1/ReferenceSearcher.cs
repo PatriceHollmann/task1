@@ -212,7 +212,7 @@ namespace task1
            //DbConnection connection = new SqlConnection(linkConnectionString);
 
             CheckReportData checkReport=null;
-            string linkSqlString = "SELECT * FROM Links GROUP BY StatusCode"; 
+            string linkSqlString = "SELECT * FROM Links"; 
                 using (SqlConnection linkDbConnection = new SqlConnection(linkConnectionString))
                 {
                     try
@@ -247,47 +247,8 @@ namespace task1
                 }
             }
         }
-        private void HtmlCreator (CheckReportData checkReportData)
-        {
-            try
-            {
-                using (StreamWriter writer = new StreamWriter(@"report.html", false, Encoding.UTF8))
-                {
-                    HtmlCreator htmlCreator = new HtmlCreator();
-                    //htmlContext.Add("<html>\n");
-                    //htmlContext.Add("<head>\n");
-                    //htmlContext.Add("      <title>HTML-Document</title>\n");
-                    //htmlContext.Add("      <meta charset=\"utf-8\">\n");
-                    //htmlContext.Add("</head>\n");
-                    //htmlContext.Add("<body>\n");
-                    //htmlContext.Add("       <h1>Отчет по странице</h1>\n");
-                    //htmlContext.Add("             <table>\n");
-                    //htmlContext.Add("                   <tr>\n");
-                    //htmlContext.Add("                       <td>\n");
-                    writer.Write(htmlCreator.htmlHeaderStrings);
-                   foreach (var status in httpReport.Statuses)
-                    {
-                            while (httpReport.Reports.ContainsValue(status.Key))
-                            {
-                            writer.WriteLine("                   <tr>\n");
-                            writer.WriteLine("                       <td>"+ status.Key + status.Value + "<\td>\n");
-                            writer.WriteLine("                   <\tr>\n");
-                            foreach (var item in httpReport.Reports)
-                                {
-                                    writer.WriteLine("                   <tr>\n");
-                                    writer.WriteLine("                       <td>" + item.Key + "<\td>+<td>" + item.Value + "<\td>\n");
-                                    writer.WriteLine("                   <\tr>\n");
-                                }
-                            }
-                    }
-                    writer.Write(htmlCreator.htmlFooterStrings);
-                }
-            }
-            catch (Exception e)
-            {
-                _errors.Add(e.Message);
-            }
-        }
+  
+
 
     }
     public class HttpReport
