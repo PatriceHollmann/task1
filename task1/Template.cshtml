@@ -1,0 +1,27 @@
+﻿@model task1.HttpReport
+@using task1
+@using System.Collections.Generic
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Report</title>
+</head>
+<body>
+    @for (var i = 0; i < @Model.Statuses.Count; i++)
+    {
+        <div>@Model.Statuses.Keys.ElementAt(i)  </div>
+        <div>@Model.Statuses[@Model.Statuses.Keys.ElementAt(i)] </div>
+    foreach (var item in @Model.Reports)
+       {
+    while (@Model.Reports.ContainsValue(@Model.Statuses.Keys.ElementAt(i)))
+         {
+        <div>item.Key </div>
+        <div>item.Value </div>
+         }
+       }
+    }
+</body>
+</html>

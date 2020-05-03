@@ -30,3 +30,8 @@ C:\Users\GrigorievaT\source\repos\InternProjects\task1\task1\obj\Debug\task1.csp
 C:\Users\GrigorievaT\source\repos\InternProjects\task1\task1\obj\Debug\task1.csproj.CopyComplete
 C:\Users\GrigorievaT\source\repos\InternProjects\task1\task1\obj\Debug\task1.exe
 C:\Users\GrigorievaT\source\repos\InternProjects\task1\task1\obj\Debug\task1.pdb
+C:\Users\User\source\repos\task1\task1\bin\Debug\Template.cshtml
+C:\Users\User\source\repos\task1\task1\bin\Debug\RazorEngine.dll
+C:\Users\User\source\repos\task1\task1\bin\Debug\System.Web.Razor.dll
+C:\Users\User\source\repos\task1\task1\bin\Debug\RazorEngine.xml
+C:\Users\User\source\repos\task1\task1\bin\Debug\System.Web.Razor.xml

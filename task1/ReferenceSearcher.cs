@@ -16,10 +16,10 @@ namespace task1
 {
     public class ReferenceSearcher
     {
+        HttpReport httpReport = new HttpReport();
         private List<string> _urls;
         private List<string> _errors;
-        private Dictionary<int, string> _statuses;
-        private Dictionary<string, int> _reports;
+
         private string _server { get; }
         private string _email { get; }
         private string _urlAddress { get; }
@@ -33,9 +33,7 @@ namespace task1
             _urlAddress = urlAddress;
             _inclusion = inclusion;
             _urls = new List<string>();
-            _reports = new Dictionary<string, int>();
             _errors = new List<string>();
-            _statuses = new Dictionary<int, string>();
         }
 
         public void Search()
@@ -47,11 +45,11 @@ namespace task1
             string content = PageContent(url);
             var urls = _getLinks(content);
             CheckLinks(urls, url);
-            if (this._inclusion > level)
+            if (_inclusion > level)
             {
                 foreach (var link in urls)
                 {
-                   if (!_reports.ContainsKey(link))
+                   if (!httpReport.Reports.ContainsKey(link))
                         Search(link, level + 1);
                 }
             }
@@ -65,7 +63,7 @@ namespace task1
                 string content = null;
                 if (response.StatusCode == HttpStatusCode.OK)
                 {
-                    _statuses.Add((int)response.StatusCode, response.StatusDescription);
+                    httpReport.Statuses.Add((int)response.StatusCode, response.StatusDescription);
 
                     using (Stream stream = response.GetResponseStream())
                     {
@@ -81,8 +79,8 @@ namespace task1
             catch (WebException ex)
             {
                 var response = ex.Response as HttpWebResponse;
-                _reports.Add(url, (int)response.StatusCode);
-                _statuses.Add((int)response.StatusCode, response.StatusDescription);
+                httpReport.Reports.Add(url, (int)response.StatusCode);
+                httpReport.Statuses.Add((int)response.StatusCode, response.StatusDescription);
             }
             catch (Exception e)
             {
@@ -114,7 +112,7 @@ namespace task1
         {
             foreach (String link in urls)
             {
-                if (!(_reports.ContainsKey(link)|| _errors.Where(x=>x.Contains(link)).ToList().Any()))
+                if (!(httpReport.Reports.ContainsKey(link)|| _errors.Where(x=>x.Contains(link)).ToList().Any()))
                 {
                     try
                     {
@@ -122,10 +120,10 @@ namespace task1
                         HttpWebRequest request = (HttpWebRequest)WebRequest.Create(absoluteUrl);
                         HttpWebResponse response = (HttpWebResponse)request.GetResponse();
                         int key = (int)response.StatusCode;
-                        _reports.Add(absoluteUrl, key);
+                        httpReport.Reports.Add(absoluteUrl, key);
 
-                        if (!_statuses.ContainsKey((int)response.StatusCode))
-                            _statuses.Add((int)response.StatusCode, response.StatusDescription);
+                        if (!httpReport.Statuses.ContainsKey((int)response.StatusCode))
+                            httpReport.Statuses.Add((int)response.StatusCode, response.StatusDescription);
 
                         response.Close();
                     }
@@ -134,10 +132,10 @@ namespace task1
                         var response = ex.Response as HttpWebResponse;
                         if (response != null)
                         {
-                            _reports.Add(link, (int)response.StatusCode);
+                            httpReport.Reports.Add(link, (int)response.StatusCode);
 
-                            if (!_statuses.ContainsKey((int)response.StatusCode))
-                                _statuses.Add((int)response.StatusCode, response.StatusDescription);
+                            if (!httpReport.Statuses.ContainsKey((int)response.StatusCode))
+                                httpReport.Statuses.Add((int)response.StatusCode, response.StatusDescription);
                         }
                         else
                             _errors.Add(link + " " + ex.Message.ToString());
@@ -161,7 +159,7 @@ namespace task1
             using (StreamWriter writer = new StreamWriter(fileAddress + "/" + fileName, false, Encoding.UTF8))
             {
                 writer.WriteLine("URL,Status Code");
-                foreach (var keyValue in _reports)
+                foreach (var keyValue in httpReport.Reports)
                 {
                     writer.WriteLine(keyValue.Key + "," + keyValue.Value);
                 }
@@ -244,7 +242,7 @@ namespace task1
                     {
                         LinkReportData.Name = reader.GetString(0);
                         LinkReportData.StatusCode = reader.GetInt32(1);
-                        _reports.Add(LinkReportData.Name, LinkReportData.StatusCode);
+                        httpReport.Reports.Add(LinkReportData.Name, LinkReportData.StatusCode);
                     }
                 }
             }
@@ -267,14 +265,14 @@ namespace task1
                     //htmlContext.Add("                   <tr>\n");
                     //htmlContext.Add("                       <td>\n");
                     writer.Write(htmlCreator.htmlHeaderStrings);
-                   foreach (var status in _statuses)
+                   foreach (var status in httpReport.Statuses)
                     {
-                            while (_reports.ContainsValue(status.Key))
+                            while (httpReport.Reports.ContainsValue(status.Key))
                             {
                             writer.WriteLine("                   <tr>\n");
                             writer.WriteLine("                       <td>"+ status.Key + status.Value + "<\td>\n");
                             writer.WriteLine("                   <\tr>\n");
-                            foreach (var item in _reports)
+                            foreach (var item in httpReport.Reports)
                                 {
                                     writer.WriteLine("                   <tr>\n");
                                     writer.WriteLine("                       <td>" + item.Key + "<\td>+<td>" + item.Value + "<\td>\n");
@@ -290,8 +288,19 @@ namespace task1
                 _errors.Add(e.Message);
             }
         }
+
     }
-        public  class LinkReportData
+    public class HttpReport
+    {
+        public Dictionary<int, string> Statuses { get; set; }
+        public Dictionary<string, int> Reports { get; set; }
+        public HttpReport()
+        {
+            Statuses = new Dictionary<int, string>();
+            Reports = new Dictionary<string, int>();
+        }
+    }
+    public  class LinkReportData
     {
         public static string Name { get; set; }
         public static int StatusCode { get; set; }
