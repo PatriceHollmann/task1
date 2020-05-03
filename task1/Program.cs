@@ -27,6 +27,7 @@ namespace task1
             catch (Exception ex)
             {
                 Console.WriteLine(ex);
+                Console.ReadKey();
             }
             return;
             int.TryParse(ConfigurationManager.AppSettings["inclusion"],out int inclusion);

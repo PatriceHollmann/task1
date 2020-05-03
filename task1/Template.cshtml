@@ -11,9 +11,11 @@
 </head>
 <body>
     <table>
+
         @for (var i = 0; i < @Model.Statuses.Count; i++)
         {
-            @Model.Statuses.Keys.ElementAt(i)
+            @*@Model.Statuses.Keys.ElementAt(i)*@
+
             <tr>
                 <th>@Model.Statuses.Values.ElementAt(i) </th>
                 <th> @Model.Statuses.Keys.ElementAt(i)</th>
@@ -23,14 +25,14 @@
 
                 foreach (var item in @Model.Reports.Where(x => x.Value == @Model.Statuses.Keys.ElementAt(i)))
                 {
-            <tr>
-                  <td>@item.Key</td>
-                  <td>@item.Value</td>
-             </tr>
+                    <tr>
+                        <td>@item.Key</td>
+                        <td>@item.Value</td>
+                    </tr>
                 }
-             }
-         }
-              
+            }
+        }
+
     </table>
- </body>
+</body>
 </html>
