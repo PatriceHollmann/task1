@@ -10,6 +10,7 @@ using System.Net.Mail;
 using System.Text;
 using System.Text.RegularExpressions;
 using System.Threading.Tasks;
+using System.Web;
 using System.Web.UI.HtmlControls;
 
 namespace task1
@@ -19,17 +20,16 @@ namespace task1
         HttpReport httpReport = new HttpReport();
         private List<string> _urls;
         private List<string> _errors;
-
-        private string _server { get; }
-        private string _email { get; }
+        //private string _serverErrorMessage { get; }
+        //private string _emailErrorMessage { get; }
         private string _urlAddress { get; }
         private int _inclusion { get; }
         //private string _pattern = @"((http(s)?:\/\/)?(www\.)?([.]{2}[~\.\\/])*[a-zA-Z0-9@:%_\+~#=/\\]+\.[a-z]{2,}([a-zA-Z0-9-@:%_\+.~#?&/\\=])*)";
         private string _pattern = @"[(http(s)?):\/\/(www\.)?a-zA-Z0-9@:%._\+~#=]{2,}\.[a-z]{2,3}\b([-a-zA-Z0-9@:%_\+.~#?&//=]*)";
-        public ReferenceSearcher(string server, string email, string urlAddress, int inclusion)
+        public ReferenceSearcher( string urlAddress, int inclusion) //string serverErrorReport, string emailErrorReport,
         {
-            _server = server;
-            _email = email;
+            //_serverErrorMessage = serverErrorReport;
+            //_emailErrorMessage = emailErrorReport;
             _urlAddress = urlAddress;
             _inclusion = inclusion;
             _urls = new List<string>();
@@ -56,6 +56,10 @@ namespace task1
         }
         private string PageContent(string url)
         {
+            if (_inclusion == 0)
+                _errors.Add("Не корректное значение степени вложенности");
+            if (_urlAddress == null)
+                _errors.Add("Не корректный адрес страницы");
             try
             {
                 HttpWebRequest request = (HttpWebRequest)WebRequest.Create(url);
@@ -63,8 +67,7 @@ namespace task1
                 string content = null;
                 if (response.StatusCode == HttpStatusCode.OK)
                 {
-                    httpReport.Statuses.Add((int)response.StatusCode, response.StatusDescription);
-
+                    //httpReport.Statuses.Add((int)response.StatusCode, response.StatusDescription);
                     using (Stream stream = response.GetResponseStream())
                     {
                         using (StreamReader reader = new StreamReader(stream))
@@ -80,7 +83,7 @@ namespace task1
             {
                 var response = ex.Response as HttpWebResponse;
                 httpReport.Reports.Add(url, (int)response.StatusCode);
-                httpReport.Statuses.Add((int)response.StatusCode, response.StatusDescription);
+                //httpReport.Statuses.Add((int)response.StatusCode, response.StatusDescription);
             }
             catch (Exception e)
             {
@@ -121,10 +124,8 @@ namespace task1
                         HttpWebResponse response = (HttpWebResponse)request.GetResponse();
                         int key = (int)response.StatusCode;
                         httpReport.Reports.Add(absoluteUrl, key);
-
-                        if (!httpReport.Statuses.ContainsKey((int)response.StatusCode))
-                            httpReport.Statuses.Add((int)response.StatusCode, response.StatusDescription);
-
+                        //if (!httpReport.Statuses.ContainsKey((int)response.StatusCode))
+                        //    httpReport.Statuses.Add((int)response.StatusCode, response.StatusDescription);
                         response.Close();
                     }
                     catch (WebException ex)
@@ -133,9 +134,8 @@ namespace task1
                         if (response != null)
                         {
                             httpReport.Reports.Add(link, (int)response.StatusCode);
-
-                            if (!httpReport.Statuses.ContainsKey((int)response.StatusCode))
-                                httpReport.Statuses.Add((int)response.StatusCode, response.StatusDescription);
+                            //if (!httpReport.Statuses.ContainsKey((int)response.StatusCode))
+                            //    httpReport.Statuses.Add((int)response.StatusCode, response.StatusDescription);
                         }
                         else
                             _errors.Add(link + " " + ex.Message.ToString());
@@ -152,7 +152,7 @@ namespace task1
 
         }
 
-        public void Report(string fileAddress, string fileName)
+        public void ErrorsReport(string fileAddress, string fileName)
         {
             if (fileAddress == null || fileName == null)
                 _errors.Add("Не полные исходные данные для файла отчета");
@@ -165,13 +165,13 @@ namespace task1
                 }
             }
         }
-        public async Task SendEmailAsync()
+        public async Task SendErrorsReportAsync(string serverErrorReport, string emailErrorReport)
         {
-            MailParamsCheck();
+            MailParamsCheck(serverErrorReport, emailErrorReport);
             if (_errors != null)
             {
                 MailAddress from = new MailAddress("Tatiana.Grigorieva@icl-services.com");
-                MailAddress to = new MailAddress(_email);
+                MailAddress to = new MailAddress(emailErrorReport);
                 MailMessage message = new MailMessage(from,to);
                 message.Subject = "Отчет об ошибках";
                 _errors.ForEach(x => x += ";\n");
@@ -180,7 +180,7 @@ namespace task1
                 {
                     message.Body += error + ";\n";
                 }
-                SmtpClient client = new SmtpClient(_server);
+                SmtpClient client = new SmtpClient(serverErrorReport);
                 client.UseDefaultCredentials = true;
                 try
                 {
@@ -188,30 +188,53 @@ namespace task1
                 }
                 catch (Exception ex)
                 {
+                    _errors.Add(ex.ToString());
+                    using (StreamWriter writer = new StreamWriter("Errors.txt", false, Encoding.UTF8))
+                    {
+                        foreach (var item in _errors)
+                            writer.WriteLine(item);
+                    }
                     Console.WriteLine("Ошибка создания письма: {0}", ex.ToString());
+                    Console.ReadKey(); 
                 }
             }
             else
                 return;
         }
 
-        private void MailParamsCheck()
+        private void MailParamsCheck(string server, string email)
         {
             string emailPattern = @"^(?("")(""[^""]+?""@)|(([0-9a-z]((\.(?!\.))|[-!#\$%&'\*\+/=\?\^`\{\}\|~\w])*)(?<=[0-9a-z])@))" +
                 @"(?(\[)(\[(\d{1,3}\.){3}\d{1,3}\])|(([0-9a-z][-\w]*[0-9a-z]*\.)+[a-z0-9]{2,17}))$";
-            if (_server == null || _email == null)
+            if (server == null || email == null)
+            {
                 _errors.Add("Не полные исходные данные для отправки почты");
-            if (_urlAddress == null || _inclusion == 0)
-                _errors.Add("Не полные исходные данные для проверки страницы");
-            if (!Regex.IsMatch(_email, emailPattern, RegexOptions.IgnoreCase))
-                _errors.Add("Не корректно введен адрес получателя почты");
+                using (StreamWriter writer = new StreamWriter("Errors.txt", false, Encoding.UTF8))
+                {
+                    foreach (var item in _errors)
+                        writer.WriteLine(item);
+                }
+                Console.WriteLine("Не полные исходные данные для отправки почты");
+                Console.ReadKey();
+            }
+            if (!Regex.IsMatch(email, emailPattern, RegexOptions.IgnoreCase))
+            {
+                _errors.Add("Не корректно введен адрес получателя почты"); //TODO что в случае некорректных данных? консоль+сохранять в файл
+                using (StreamWriter writer = new StreamWriter("Errors.txt", false, Encoding.UTF8))
+                {
+                    foreach (var item in _errors)
+                    writer.WriteLine(item);
+                }
+                Console.WriteLine("Не корректно введен адрес получателя почты");
+                Console.ReadKey();
+            }
         }
 
-        public CheckReportData GetDataFromDatabase(string linkConnectionString)//, string checkConnnectionString)
+        public void GetDataFromDatabase(string linkConnectionString)//, string checkConnnectionString)
         {
            //DbConnection connection = new SqlConnection(linkConnectionString);
 
-            CheckReportData checkReport=null;
+            //CheckReportData checkReport;
             string linkSqlString = "SELECT * FROM Links"; 
                 using (SqlConnection linkDbConnection = new SqlConnection(linkConnectionString))
                 {
@@ -219,7 +242,7 @@ namespace task1
                     {
                         LinkDbConnectionOpen(linkSqlString, linkDbConnection);
                     }
-                     catch (SqlException ex)
+                    catch (SqlException ex)
                     {
                         _errors.Add(ex.Message);
                     }
@@ -228,7 +251,6 @@ namespace task1
                         _errors.Add(e.Message);
                     }
                 }
-            return checkReport;
         }
          private void LinkDbConnectionOpen(string linkSqlString, SqlConnection linkDbConnection)
         {
@@ -247,9 +269,44 @@ namespace task1
                 }
             }
         }
-  
-
-
+        public void GetHeaders ()
+        {
+            string statusDescription;
+            foreach (var status in httpReport.Reports.Values)
+            {
+                if (!httpReport.Statuses.ContainsKey(status))
+                {
+                    statusDescription = HttpWorkerRequest.GetStatusDescription(status);
+                    httpReport.Statuses.Add(status, statusDescription);
+                }
+            }
+        }
+        public void SendCheckReport(string serverCheckReport, string emailCheckReport, string fileReportPath)
+        {
+            MailParamsCheck(serverCheckReport, emailCheckReport);
+                MailAddress from = new MailAddress("Tatiana.Grigorieva@icl-services.com");
+                MailAddress to = new MailAddress(emailCheckReport);
+                MailMessage message = new MailMessage(from, to);
+                message.Subject = "Отчет о работе";
+                message.Attachments.Add(new Attachment(fileReportPath));
+                SmtpClient client = new SmtpClient(serverCheckReport);
+                client.UseDefaultCredentials = true;
+                try
+                {
+                    client.Send(message);
+                }
+                catch (Exception ex)
+                {
+                _errors.Add(ex.ToString());
+                using (StreamWriter writer = new StreamWriter("Errors.txt", false, Encoding.UTF8))
+                {
+                    foreach (var item in _errors)
+                        writer.WriteLine(item);
+                }
+                Console.WriteLine("Ошибка создания письма: {0}", ex.ToString());
+                Console.ReadKey();
+                }
+        }
     }
     public class HttpReport
     {
