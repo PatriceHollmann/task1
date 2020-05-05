@@ -188,14 +188,8 @@ namespace task1
                 }
                 catch (Exception ex)
                 {
-                    _errors.Add(ex.ToString());
-                    using (StreamWriter writer = new StreamWriter("Errors.txt", false, Encoding.UTF8))
-                    {
-                        foreach (var item in _errors)
-                            writer.WriteLine(item);
-                    }
-                    Console.WriteLine("Ошибка создания письма: {0}", ex.ToString());
-                    Console.ReadKey(); 
+                    string errorMessage= "Ошибка создания письма: "+ ex.ToString();
+                    MailSendingError(errorMessage);
                 }
             }
             else
@@ -208,28 +202,38 @@ namespace task1
                 @"(?(\[)(\[(\d{1,3}\.){3}\d{1,3}\])|(([0-9a-z][-\w]*[0-9a-z]*\.)+[a-z0-9]{2,17}))$";
             if (server == null || email == null)
             {
-                _errors.Add("Не полные исходные данные для отправки почты");
-                using (StreamWriter writer = new StreamWriter("Errors.txt", false, Encoding.UTF8))
+                string errorMessage = "Не полные исходные данные для отправки почты";
+                MailSendingError(errorMessage);
+            }
+            if (!Regex.IsMatch(email, emailPattern, RegexOptions.IgnoreCase))
+            {
+                string errorMessage = "Не корректно введен адрес получателя почты";
+                MailSendingError(errorMessage);
+            }
+        }
+        private void MailSendingError (string errorMessage)
+        {
+            string path = "Errors.txt";
+            _errors.Add(errorMessage);
+            FileInfo fileErrors = new FileInfo(path);
+            if (!fileErrors.Exists)
+            {
+                using (StreamWriter writer = new StreamWriter(path, false, Encoding.UTF8))
                 {
                     foreach (var item in _errors)
                         writer.WriteLine(item);
                 }
-                Console.WriteLine("Не полные исходные данные для отправки почты");
-                Console.ReadKey();
-            }
-            if (!Regex.IsMatch(email, emailPattern, RegexOptions.IgnoreCase))
+            }   
+            else
             {
-                _errors.Add("Не корректно введен адрес получателя почты"); //TODO что в случае некорректных данных? консоль+сохранять в файл
-                using (StreamWriter writer = new StreamWriter("Errors.txt", false, Encoding.UTF8))
+                using (StreamWriter writer = new StreamWriter(path, true, Encoding.UTF8))
                 {
-                    foreach (var item in _errors)
-                    writer.WriteLine(item);
+                        writer.WriteLine(errorMessage);
                 }
-                Console.WriteLine("Не корректно введен адрес получателя почты");
-                Console.ReadKey();
             }
+            Console.WriteLine(errorMessage);
+            Console.ReadKey();
         }
-
         public void GetDataFromDatabase(string linkConnectionString)//, string checkConnnectionString)
         {
            //DbConnection connection = new SqlConnection(linkConnectionString);
@@ -307,28 +311,5 @@ namespace task1
                 Console.ReadKey();
                 }
         }
-    }
-    public class HttpReport
-    {
-        public Dictionary<int, string> Statuses { get; set; }
-        public Dictionary<string, int> Reports { get; set; }
-        public HttpReport()
-        {
-            Statuses = new Dictionary<int, string>();
-            Reports = new Dictionary<string, int>();
-        }
-    }
-    public  class LinkReportData
-    {
-        public static string Name { get; set; }
-        public static int StatusCode { get; set; }
-        public static string Type { get; set; }
-    }
-    public class CheckReportData
-    {
-        public static string Login { get; set; }
-        public static DateTime StartTime { get; set; }
-        public static DateTime EndTime { get; set; }
-        public static int Number { get; set; }
     }
 }

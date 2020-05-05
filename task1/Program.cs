@@ -39,11 +39,12 @@ namespace task1
             string emailCheckReport = ConfigurationManager.AppSettings["emailCheckReport"];
             string serverCheckReport = ConfigurationManager.AppSettings["serverCheckReport"];
             string urlAddress = ConfigurationManager.AppSettings["urlAddress"];
+            string connectionString = ConfigurationManager.ConnectionStrings["LinkConnection"].ConnectionString;
 
             ReferenceSearcher refereneSearcher = new ReferenceSearcher(@urlAddress, inclusion);
             refereneSearcher.Search();
 
-            refereneSearcher.GetDataFromDatabase(ConfigurationManager.ConnectionStrings["LinkConnection"].ConnectionString);
+            refereneSearcher.GetDataFromDatabase(connectionString);
             refereneSearcher.GetHeaders();
             refereneSearcher.SendCheckReport(serverCheckReport, emailCheckReport, "Index.html");
 

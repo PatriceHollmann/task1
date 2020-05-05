@@ -67,7 +67,10 @@
     <None Include="Template.cshtml">
       <CopyToOutputDirectory>Always</CopyToOutputDirectory>
     </None>
+    <Compile Include="CheckReportData.cs" />
     <Compile Include="HtmlCreator.cs" />
+    <Compile Include="HttpReport.cs" />
+    <Compile Include="LinkReportData.cs" />
     <Compile Include="Program.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
     <Compile Include="ReferenceSearcher.cs" />
